@@ -12,7 +12,6 @@ from houaiss3_stardict.parser import parse_entries  # noqa: E402
 
 
 SYNTHETIC = """\
-Synthetic format header ignored by the parser
 *lexeme-alpha
 n1
 d2001
@@ -23,6 +22,8 @@ A0
 :a fictional definition created only for testing
 <an invented example|another invented example
 TSYN|synthetic field
+r01|tr.|synthetic transitive
+LSYN|lang.|synthetic language
 Plexeme-alphas
 $lexeme_alpha
 3invented origin
@@ -41,6 +42,19 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(entries[0].homonym, "1")
         self.assertIn("lexeme-alphas", entries[0].aliases)
         self.assertIn("lexeme_alpha", entries[0].aliases)
+
+    def test_three_part_metadata_is_split_cleanly(self) -> None:
+        entries = list(parse_entries(SYNTHETIC.splitlines()))
+        regency = next(
+            block for block in entries[0].blocks if block.label == "Regência"
+        )
+        language = next(
+            block for block in entries[0].blocks if block.label == "Língua"
+        )
+        self.assertEqual(regency.abbreviation, "tr.")
+        self.assertEqual(regency.text, "synthetic transitive")
+        self.assertEqual(language.abbreviation, "lang.")
+        self.assertEqual(language.text, "synthetic language")
 
 
 if __name__ == "__main__":

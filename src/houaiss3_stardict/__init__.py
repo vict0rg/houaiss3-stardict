@@ -1,4 +1,4 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Educational legacy dictionary interoperability tools."""
 
-__version__ = "0.2.1.dev0"
+__version__ = "0.2.2.dev0"

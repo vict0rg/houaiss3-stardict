@@ -9,6 +9,12 @@ from .markup import inline_to_html
 from .model import Entry, RenderedEntry
 
 
+def _with_abbreviation(text: str, abbreviation: str | None) -> str:
+    if not abbreviation:
+        return text
+    return f'<span class="abbr">{inline_to_html(abbreviation)}</span> — {text}'
+
+
 def render_entry(entry: Entry) -> str:
     """Render one parsed source record as an HTML fragment."""
     parts: list[str] = ['<div class="houaiss-entry">']
@@ -26,18 +32,13 @@ def render_entry(entry: Entry) -> str:
 
         if block.kind == "date":
             parts.append(
-                f'<div class="metadata"><span class="label">Dating:</span> {text}</div>'
+                f'<div class="metadata"><span class="label">Datação:</span> {text}</div>'
             )
 
         elif block.kind == "part_of_speech":
-            abbreviation = (
-                f'<span class="abbr">{inline_to_html(block.abbreviation)}</span>'
-                if block.abbreviation
-                else ""
-            )
-            separator = " — " if abbreviation else ""
             parts.append(
-                f'<div class="part-of-speech">{abbreviation}{separator}{text}</div>'
+                f'<div class="part-of-speech">'
+                f'{_with_abbreviation(text, block.abbreviation)}</div>'
             )
 
         elif block.kind == "definition":
@@ -60,13 +61,16 @@ def render_entry(entry: Entry) -> str:
 
         elif block.kind == "etymology":
             parts.append(
-                f'<div class="etymology"><span class="label">Etymology:</span> {text}</div>'
+                f'<div class="etymology">'
+                f'<span class="label">Etimologia:</span> {text}</div>'
             )
 
         elif block.kind == "metadata":
-            label = inline_to_html(block.label or "Note")
+            label = inline_to_html(block.label or "Nota")
+            value = _with_abbreviation(text, block.abbreviation)
             parts.append(
-                f'<div class="metadata"><span class="label">{label}:</span> {text}</div>'
+                f'<div class="metadata">'
+                f'<span class="label">{label}:</span> {value}</div>'
             )
 
         else:

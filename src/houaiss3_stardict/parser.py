@@ -12,27 +12,34 @@ from collections.abc import Iterable, Iterator
 from .model import Block, Entry
 
 _METADATA = {
-    "T": ("metadata", "Field"),
-    "R": ("metadata", "Regional usage"),
-    "D": ("metadata", "Derivation"),
-    "U": ("metadata", "Usage"),
-    "I": ("metadata", "Historical usage"),
-    "E": ("metadata", "Frequency"),
-    "L": ("metadata", "Language"),
-    "r": ("metadata", "Verb pattern"),
-    "c": ("metadata", "Grammatical class"),
+    "T": ("metadata", "Rubrica"),
+    "R": ("metadata", "Regionalismo"),
+    "D": ("metadata", "Derivação"),
+    "U": ("metadata", "Uso"),
+    "I": ("metadata", "Uso"),
+    "E": ("metadata", "Uso"),
+    "L": ("metadata", "Língua"),
+    "r": ("metadata", "Regência"),
+    "c": ("metadata", "Classe gramatical"),
 }
 
 _GENERIC_NUMERIC_MARKERS = set("012456789")
 
 
-def _pipe_block(prefix: str, payload: str) -> Block:
-    parts = payload.split("|")
-    code = parts[0].strip() if parts else ""
-    abbreviation = parts[1].strip() if len(parts) > 1 else None
-    text = parts[2].strip() if len(parts) > 2 else (
-        parts[1].strip() if len(parts) > 1 else code
-    )
+def _part_of_speech_block(payload: str) -> Block:
+    parts = [part.strip() for part in payload.split("|")]
+    code = parts[0] if parts else ""
+
+    if len(parts) >= 3:
+        abbreviation = parts[1] or None
+        text = "|".join(parts[2:]).strip()
+    elif len(parts) == 2:
+        abbreviation = None
+        text = parts[1]
+    else:
+        abbreviation = None
+        text = code
+
     return Block(
         kind="part_of_speech",
         text=text,
@@ -43,12 +50,26 @@ def _pipe_block(prefix: str, payload: str) -> Block:
 
 def _metadata_block(prefix: str, payload: str) -> Block:
     kind, label = _METADATA[prefix]
-    parts = payload.split("|", 1)
-    if len(parts) == 2:
-        code, text = parts
+    parts = [part.strip() for part in payload.split("|")]
+
+    code = parts[0] if parts else ""
+    abbreviation = None
+
+    if len(parts) >= 3:
+        abbreviation = parts[1] or None
+        text = "|".join(parts[2:]).strip()
+    elif len(parts) == 2:
+        text = parts[1]
     else:
-        code, text = "", parts[0]
-    return Block(kind=kind, label=label, text=text.strip(), code=code.strip())
+        text = code
+
+    return Block(
+        kind=kind,
+        label=label,
+        text=text,
+        abbreviation=abbreviation,
+        code=code,
+    )
 
 
 def parse_entries(lines: Iterable[str], limit: int | None = None) -> Iterator[Entry]:
@@ -90,13 +111,7 @@ def parse_entries(lines: Iterable[str], limit: int | None = None) -> Iterator[En
             current.homonym = payload
             continue
 
-        if prefix == "P":
-            alias = payload.strip()
-            if alias:
-                current.aliases.add(alias)
-            continue
-
-        if prefix == "$":
+        if prefix in {"P", "$"}:
             alias = payload.strip()
             if alias:
                 current.aliases.add(alias)
@@ -107,7 +122,7 @@ def parse_entries(lines: Iterable[str], limit: int | None = None) -> Iterator[En
             continue
 
         if prefix == "C":
-            current.blocks.append(_pipe_block(prefix, payload))
+            current.blocks.append(_part_of_speech_block(payload))
             continue
 
         if prefix == "-":
@@ -140,7 +155,7 @@ def parse_entries(lines: Iterable[str], limit: int | None = None) -> Iterator[En
 
         if prefix == "3":
             current.blocks.append(
-                Block(kind="etymology", label="Etymology", text=payload.strip())
+                Block(kind="etymology", label="Etimologia", text=payload.strip())
             )
             continue
 
@@ -150,7 +165,7 @@ def parse_entries(lines: Iterable[str], limit: int | None = None) -> Iterator[En
 
         if prefix == "o":
             current.blocks.append(
-                Block(kind="metadata", label="Pronunciation", text=payload.strip())
+                Block(kind="metadata", label="Pronúncia", text=payload.strip())
             )
             continue
 
@@ -159,9 +174,6 @@ def parse_entries(lines: Iterable[str], limit: int | None = None) -> Iterator[En
             continue
 
         if prefix in {"v", "S", "s", "®"}:
-            # Compact flags used by auxiliary structures. They are preserved
-            # only when they contain meaningful payload beyond a one-letter
-            # flag value.
             meaningful = payload.strip()
             if meaningful and meaningful not in {"S", "N"}:
                 current.blocks.append(Block(kind="note", text=meaningful))
@@ -170,8 +182,6 @@ def parse_entries(lines: Iterable[str], limit: int | None = None) -> Iterator[En
         if prefix == "\\" and line.strip() == r"\par":
             continue
 
-        # Preserve unclassified textual payload rather than silently deleting
-        # information. The raw marker itself is not shown to users.
         current.blocks.append(Block(kind="note", text=payload.strip() or line.strip()))
 
     if current is not None and (limit is None or emitted < limit):
