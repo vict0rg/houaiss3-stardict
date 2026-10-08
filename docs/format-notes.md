@@ -130,3 +130,35 @@ Source files 021 through 082 are standalone GIF resources. Version 1.0 of the
 converter is intentionally text-only and does not export these media files.
 This keeps the conversion scope focused on lexical interoperability and avoids
 inventing an entry-to-image mapping that has not been demonstrated.
+
+## Multi-target Alias Compatibility
+
+StarDict permits multiple synonym records with the same synonym spelling, but
+reader behavior is not uniform. In compatibility testing, `sdcv` returned only
+one target from duplicate `.syn` records and also only one target from duplicate
+`.idx` words.
+
+The converter therefore uses a compatibility-oriented representation:
+
+- single-target aliases remain compact `.syn` records;
+- multi-target aliases are materialized once in `.idx`;
+- the materialized alias payload contains every target entry in deterministic
+  StarDict order.
+
+This avoids reader-dependent target loss while preserving all target
+definitions. Repository tests use only synthetic content.
+
+## Public Repository Safety
+
+The repository safety checker reads the exact blobs stored in the active Git
+index. It does not assume that the current worktree copy is the content that
+will be committed.
+
+The checker rejects prohibited dictionary/source extensions and directories,
+unexpectedly large blobs, common binary/archive/database signatures, NUL bytes,
+non-UTF-8 blobs, source-style `deahNNN` names, generated audit files, and
+generic source/index-like text structures.
+
+The pre-commit hook runs this index-aware check before every local commit.
+These safeguards reduce accidental publication risk; they do not grant rights
+to third-party dictionary content.

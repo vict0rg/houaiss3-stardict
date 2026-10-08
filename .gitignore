@@ -81,3 +81,9 @@ dictionary-output/
 *.bak
 *.tmp
 *.orig
+
+# Additional generated/local safety exclusions
+*.idx.oft
+*-audit.txt
+*.patch
+*.diff
