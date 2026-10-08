@@ -91,3 +91,9 @@ grant rights to any third-party dictionary, lexical database, image, trademark,
 or other proprietary material.
 
 See [LICENSE](LICENSE) and [DISCLAIMER.md](DISCLAIMER.md).
+
+## Text and media scope
+
+The converter targets lexical text, search keys, aliases, morphology, and
+source-supported metadata. Standalone source media files are intentionally not
+exported by the version 1.0 text pipeline.

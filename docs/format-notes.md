@@ -105,3 +105,28 @@ This distinction is intentional:
 
 The fallback can be disabled with `--no-nominal-fallback` for source-only
 experiments.
+
+## Text Fidelity Decisions
+
+The stable text pipeline distinguishes source markers according to observed
+structure rather than assigning unsupported semantics.
+
+- `M` contributes additional searchable aliases separated by `|`.
+- `o` and `p` are rendered as pronunciation information.
+- `t` is rendered as a translation label.
+- `®` is rendered as a registered-trademark flag without inventing a value.
+- `v`, `S`, and `s` are treated as structural flags unless they carry
+  meaningful payload beyond the observed flag values.
+- Numeric auxiliary markers remain neutral notes unless their semantics are
+  independently established.
+
+Within subentry titles, `#` and `@` separate alternative forms. The renderer
+shows both separators as a neutral slash while preserving the surrounding
+lexical text.
+
+## Media Scope
+
+Source files 021 through 082 are standalone GIF resources. Version 1.0 of the
+converter is intentionally text-only and does not export these media files.
+This keeps the conversion scope focused on lexical interoperability and avoids
+inventing an entry-to-image mapping that has not been demonstrated.

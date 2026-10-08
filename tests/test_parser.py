@@ -26,6 +26,11 @@ r01|tr.|synthetic transitive
 LSYN|lang.|synthetic language
 Plexeme-alphas
 $lexeme_alpha
+Mlexeme alpha|lexeme-alpha-alt
+osynthetic pronunciation
+psynthetic transcription
+tsynthetic translation
+®S
 3invented origin
 *lexeme-beta
 C02|v.|synthetic verb
@@ -42,6 +47,8 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(entries[0].homonym, "1")
         self.assertIn("lexeme-alphas", entries[0].aliases)
         self.assertIn("lexeme_alpha", entries[0].aliases)
+        self.assertIn("lexeme alpha", entries[0].aliases)
+        self.assertIn("lexeme-alpha-alt", entries[0].aliases)
 
     def test_three_part_metadata_is_split_cleanly(self) -> None:
         entries = list(parse_entries(SYNTHETIC.splitlines()))
@@ -55,6 +62,32 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(regency.text, "synthetic transitive")
         self.assertEqual(language.abbreviation, "lang.")
         self.assertEqual(language.text, "synthetic language")
+
+    def test_pronunciation_translation_and_registered_trademark(self) -> None:
+        entry = list(parse_entries(SYNTHETIC.splitlines()))[0]
+
+        pronunciation = [
+            block.text
+            for block in entry.blocks
+            if block.label == "Pronúncia"
+        ]
+        translation = [
+            block.text
+            for block in entry.blocks
+            if block.label == "Tradução"
+        ]
+        trademark = [
+            block
+            for block in entry.blocks
+            if block.kind == "registered_trademark"
+        ]
+
+        self.assertEqual(
+            pronunciation,
+            ["synthetic pronunciation", "synthetic transcription"],
+        )
+        self.assertEqual(translation, ["synthetic translation"])
+        self.assertEqual(len(trademark), 1)
 
 
 if __name__ == "__main__":

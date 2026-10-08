@@ -3,14 +3,24 @@
 
 from __future__ import annotations
 
+import re
+
 from .markup import inline_to_html
 from .model import Entry, RenderedEntry
+
+_SUBENTRY_SEPARATOR = re.compile(r"\s*[#@]\s*")
 
 
 def _with_abbreviation(text: str, abbreviation: str | None) -> str:
     if not abbreviation:
         return text
     return f'<span class="abbr">{inline_to_html(abbreviation)}</span> — {text}'
+
+
+def _subentry_to_html(text: str) -> str:
+    """Render source alternative separators as a neutral slash."""
+    normalized = _SUBENTRY_SEPARATOR.sub(" / ", text)
+    return inline_to_html(normalized)
 
 
 def render_entry(entry: Entry) -> str:
@@ -24,7 +34,18 @@ def render_entry(entry: Entry) -> str:
     parts.append(f'<div class="headword">{title}</div>')
 
     for block in entry.blocks:
-        text = inline_to_html(block.text)
+        if block.kind == "registered_trademark":
+            parts.append(
+                '<div class="metadata registered-trademark">'
+                '<span class="label">Marca registrada</span></div>'
+            )
+            continue
+
+        if block.kind == "subentry":
+            text = _subentry_to_html(block.text)
+        else:
+            text = inline_to_html(block.text)
+
         if not text:
             continue
 

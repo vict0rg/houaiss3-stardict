@@ -34,9 +34,18 @@ def main() -> int:
         text,
         flags=re.DOTALL,
     )
-    suspicious_subentries = sum(
-        1 for value in subentries
-        if "#" in value or " @ " in value
+
+    unresolved_subentries = sum(
+        1
+        for value in subentries
+        if re.search(r"(?<!&)#|@", value)
+    )
+
+    translation_labels = text.count(
+        '<span class="label">Tradução:</span>'
+    )
+    registered_trademark_blocks = text.count(
+        'class="metadata registered-trademark"'
     )
 
     print("Local output QA")
@@ -45,23 +54,19 @@ def main() -> int:
     for key, value in checks.items():
         print(f"{key}: {value}")
 
-    print(
-        "subentries_with_embedded_hash_or_at_markers: "
-        f"{suspicious_subentries}"
-    )
+    print(f"unresolved_subentry_separators: {unresolved_subentries}")
+    print(f"translation_labels: {translation_labels}")
+    print(f"registered_trademark_blocks: {registered_trademark_blocks}")
 
     if any(checks.values()):
         print("ERROR: unconverted low-level formatting controls were detected.")
         return 1
 
-    print("Core markup QA passed.")
+    if unresolved_subentries:
+        print("ERROR: unresolved #/@ subentry separators were detected.")
+        return 1
 
-    if suspicious_subentries:
-        print(
-            "NOTE: Some source subentry strings contain embedded lexical "
-            "separators. They are preserved rather than guessed."
-        )
-
+    print("Text-layer QA passed.")
     return 0
 
 

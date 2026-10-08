@@ -25,6 +25,8 @@ class RendererTests(unittest.TestCase):
                     text="synthetic transitive",
                     abbreviation="tr.",
                 ),
+                Block(kind="metadata", label="Tradução", text="synthetic translation"),
+                Block(kind="registered_trademark"),
                 Block(kind="etymology", text="synthetic origin"),
             ],
         )
@@ -32,8 +34,27 @@ class RendererTests(unittest.TestCase):
         self.assertIn("Datação:", html)
         self.assertIn("Rubrica:", html)
         self.assertIn("Regência:", html)
+        self.assertIn("Tradução:", html)
+        self.assertIn("Marca registrada", html)
         self.assertIn("Etimologia:", html)
         self.assertIn("tr.</span> — synthetic transitive", html)
+
+    def test_subentry_alternative_separators_are_rendered_neutrally(self) -> None:
+        entry = Entry(
+            headword="synthetic",
+            blocks=[
+                Block(
+                    kind="subentry",
+                    text="first form# second form @ third form",
+                )
+            ],
+        )
+
+        html = render_entry(entry)
+
+        self.assertIn("first form / second form / third form", html)
+        self.assertNotIn("# second", html)
+        self.assertNotIn("@ third", html)
 
 
 if __name__ == "__main__":

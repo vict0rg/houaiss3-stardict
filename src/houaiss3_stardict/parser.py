@@ -111,6 +111,12 @@ def parse_entries(lines: Iterable[str]) -> Iterator[Entry]:
                 current.aliases.add(alias)
             continue
 
+        if prefix == "M":
+            for alias in (part.strip() for part in payload.split("|")):
+                if alias:
+                    current.aliases.add(alias)
+            continue
+
         if prefix == "d":
             current.blocks.append(Block(kind="date", text=payload.strip()))
             continue
@@ -157,21 +163,27 @@ def parse_entries(lines: Iterable[str]) -> Iterator[Entry]:
             current.blocks.append(_metadata_block(prefix, payload))
             continue
 
-        if prefix in {"o", "p", "t"}:
+        if prefix in {"o", "p"}:
             current.blocks.append(
                 Block(kind="metadata", label="Pronúncia", text=payload.strip())
             )
+            continue
+
+        if prefix == "t":
+            current.blocks.append(
+                Block(kind="metadata", label="Tradução", text=payload.strip())
+            )
+            continue
+
+        if prefix == "®":
+            current.blocks.append(Block(kind="registered_trademark"))
             continue
 
         if prefix in _GENERIC_NUMERIC_MARKERS:
             current.blocks.append(Block(kind="note", text=payload.strip()))
             continue
 
-        if prefix == "M":
-            current.blocks.append(Block(kind="note", text=payload.strip()))
-            continue
-
-        if prefix in {"v", "S", "s", "®"}:
+        if prefix in {"v", "S", "s"}:
             meaningful = payload.strip()
             if meaningful and meaningful not in {"S", "N"}:
                 current.blocks.append(Block(kind="note", text=meaningful))
