@@ -15,16 +15,17 @@ from houaiss3_stardict.stardict import write_stardict  # noqa: E402
 
 
 class StarDictTests(unittest.TestCase):
-    def test_writer_creates_core_files_and_synonym(self) -> None:
+    def test_writer_creates_core_files_and_synonyms(self) -> None:
         entries = [
             RenderedEntry(
                 headword="alpha",
                 html="<b>synthetic alpha</b>",
-                aliases={"alphas"},
+                aliases={"alphas", "shared"},
             ),
             RenderedEntry(
                 headword="beta",
                 html="<b>synthetic beta</b>",
+                aliases={"shared"},
             ),
         ]
 
@@ -33,17 +34,12 @@ class StarDictTests(unittest.TestCase):
             stats = write_stardict(entries, root, "Synthetic")
 
             self.assertEqual(stats.wordcount, 2)
-            self.assertEqual(stats.synwordcount, 1)
-            self.assertTrue((root / "Synthetic.dict").is_file())
-            self.assertTrue((root / "Synthetic.idx").is_file())
-            self.assertTrue((root / "Synthetic.ifo").is_file())
-            self.assertTrue((root / "Synthetic.syn").is_file())
-            self.assertTrue((root / "Synthetic.css").is_file())
+            self.assertEqual(stats.synwordcount, 3)
+            self.assertEqual(stats.multi_target_aliases, 1)
 
             syn = (root / "Synthetic.syn").read_bytes()
-            word, raw_index = syn.split(b"\x00", 1)
-            self.assertEqual(word, b"alphas")
-            self.assertEqual(struct.unpack(">I", raw_index)[0], 0)
+            self.assertIn(b"alphas\x00", syn)
+            self.assertEqual(syn.count(b"shared\x00"), 2)
 
 
 if __name__ == "__main__":

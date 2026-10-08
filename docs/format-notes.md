@@ -7,40 +7,52 @@ No proprietary lexical content is included.
 
 ## General Characteristics
 
-The studied format appears to use:
+The studied format uses multiple related data and index files, a reversible
+byte transformation, a single-byte decoded text representation, line-oriented
+lexical records, grouped search-key indexes, and auxiliary morphology tables.
 
-- multiple related data and index files;
-- a reversible byte transformation;
-- a single-byte character encoding in decoded textual structures;
-- line-oriented lexical records;
-- record prefixes for lexical and grammatical metadata;
-- separate index structures that map search keys to records or offsets;
-- auxiliary structures for morphology and lexical relationships.
+## Search Keys and Display Headwords
 
-## Decoding Model
+The decoded lexical record and the search index are not assumed to be
+identical.
 
-A source byte can be transformed into its decoded representation using a fixed
-modular byte offset.
+The converter therefore treats the source application's grouped and detailed
+indexes as authoritative for search keys. The lexical record keeps its own
+display headword.
 
-The implementation keeps byte transformation separate from character decoding
-so that byte offsets remain stable when index structures depend on them.
+This distinction avoids silently losing indexed forms when multiple records are
+grouped under one searchable key.
 
-## Parsing Strategy
+## Morphology
 
-The parser converts source-specific records into a neutral internal
-representation.
+The conversion pipeline uses three layers:
 
-Linguistic meaning should not be inferred unless it is supported by the
-observed data structure and validated independently.
+1. aliases explicitly stored in lexical records;
+2. verbal forms accepted only when two independent source indexes agree on the
+   same target;
+3. conservative nominal inflection rules applied only when exactly one
+   existing source headword is a valid candidate.
+
+Ambiguous generated mappings are skipped.
+
+## StarDict Ordering
+
+StarDict index and synonym records use ASCII case-insensitive primary ordering
+with exact UTF-8 byte ordering as the tie-breaker. The same ordering is used by
+the structural validator.
 
 ## Test Policy
 
-All examples used by automated tests must be synthetic and must not be derived
-from proprietary dictionary content.
+All automated tests use synthetic data created specifically for this project.
 
-## StarDict Index Ordering
+## Capitalization Inside Grouped Search Keys
 
-StarDict index and synonym records must not be sorted by plain UTF-8 byte
-order. Compatible readers binary-search them using `stardict_strcmp`: an
-ASCII-only case-insensitive comparison followed by exact byte comparison as a
-tie-breaker. The writer mirrors that ordering.
+A grouped search-key row may cover detailed lexical rows whose spelling differs
+only by capitalization.
+
+The grouped index therefore defines the authoritative search key and group
+boundary. Detailed rows are validated using normalized case-insensitive
+comparison, while their original display headwords remain unchanged.
+
+This rule was derived from structural comparison of locally supplied source
+indexes. No proprietary lexical examples are included in this repository.

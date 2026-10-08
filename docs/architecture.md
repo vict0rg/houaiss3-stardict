@@ -1,29 +1,45 @@
 # Architecture
 
-The converter is organized as a pipeline:
+The converter uses a validation-first pipeline:
 
 ```text
-user-supplied source files
+user-supplied local source files
         |
         v
-byte decoder
+in-memory byte decoder
+        |
+        +----> detailed lexical index
+        +----> grouped search-key index
+        +----> morphology indexes
         |
         v
-record parser
+strict structural validation
         |
         v
-neutral lexical model
+line-oriented lexical parser
         |
-        +----> markup renderer
-        |
-        +----> morphology and alias processing
+        +----> main lexical records
+        +----> auxiliary morpheme records
         |
         v
-StarDict writer
+authoritative search-key grouping
+        |
+        +----> explicit aliases
+        +----> validated verbal aliases
+        +----> conservative nominal aliases
+        |
+        v
+HTML renderer
+        |
+        v
+staged StarDict writer
+        |
+        v
+structural StarDict validator
 ```
 
-The implementation deliberately separates decoding, parsing, rendering,
-morphology, and output generation so that each stage can be independently
-tested with synthetic data.
+Source files are read-only. Normal conversion does not create decoded
+intermediate files.
 
-Source files are treated as read-only inputs.
+The public repository contains no proprietary dictionary data. Automated tests
+use synthetic records only.

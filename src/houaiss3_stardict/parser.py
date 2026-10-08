@@ -51,7 +51,6 @@ def _part_of_speech_block(payload: str) -> Block:
 def _metadata_block(prefix: str, payload: str) -> Block:
     kind, label = _METADATA[prefix]
     parts = [part.strip() for part in payload.split("|")]
-
     code = parts[0] if parts else ""
     abbreviation = None
 
@@ -72,11 +71,10 @@ def _metadata_block(prefix: str, payload: str) -> Block:
     )
 
 
-def parse_entries(lines: Iterable[str], limit: int | None = None) -> Iterator[Entry]:
-    """Parse decoded lines into source entries."""
+def parse_entries(lines: Iterable[str]) -> Iterator[Entry]:
+    """Parse decoded lines into lexical records."""
     current: Entry | None = None
     pending_sense: str | None = None
-    emitted = 0
 
     for raw_line in lines:
         line = raw_line.rstrip("\r\n")
@@ -90,10 +88,6 @@ def parse_entries(lines: Iterable[str], limit: int | None = None) -> Iterator[En
         if line.startswith("*"):
             if current is not None:
                 yield current
-                emitted += 1
-                if limit is not None and emitted >= limit:
-                    return
-
             current = Entry(headword=line[1:].strip())
             pending_sense = None
             continue
@@ -163,13 +157,17 @@ def parse_entries(lines: Iterable[str], limit: int | None = None) -> Iterator[En
             current.blocks.append(_metadata_block(prefix, payload))
             continue
 
-        if prefix == "o":
+        if prefix in {"o", "p", "t"}:
             current.blocks.append(
                 Block(kind="metadata", label="Pronúncia", text=payload.strip())
             )
             continue
 
         if prefix in _GENERIC_NUMERIC_MARKERS:
+            current.blocks.append(Block(kind="note", text=payload.strip()))
+            continue
+
+        if prefix == "M":
             current.blocks.append(Block(kind="note", text=payload.strip()))
             continue
 
@@ -182,7 +180,8 @@ def parse_entries(lines: Iterable[str], limit: int | None = None) -> Iterator[En
         if prefix == "\\" and line.strip() == r"\par":
             continue
 
-        current.blocks.append(Block(kind="note", text=payload.strip() or line.strip()))
+        # Preserve unexpected content verbatim instead of silently dropping it.
+        current.blocks.append(Block(kind="note", text=line.strip()))
 
-    if current is not None and (limit is None or emitted < limit):
+    if current is not None:
         yield current
