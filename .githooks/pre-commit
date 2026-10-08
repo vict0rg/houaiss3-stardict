@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+echo "Running repository safety check..."
+python3 scripts/check_repository_safety.py

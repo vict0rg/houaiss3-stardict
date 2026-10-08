@@ -1,0 +1,83 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Editors and operating systems
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# Proprietary or derived dictionary content: NEVER COMMIT
+*.dhn
+*.dec
+*.dict
+*.dict.dz
+*.idx
+*.ifo
+*.syn
+*.mdx
+*.mdd
+*.dsl
+*.dsl.dz
+
+deah*.dhn
+deah*.dec
+deah*.gif
+deah*.bmp
+
+# Local source/output directories
+data/
+input/
+output/
+generated/
+extracted/
+decoded/
+raw/
+source-data/
+raw-data/
+decoded-data/
+dictionary-data/
+dictionary-output/
+
+# Databases, dumps, and archives
+*.db
+*.sqlite
+*.sqlite3
+*.dump
+*.bin
+*.dat
+*.zip
+*.7z
+*.rar
+*.tar
+*.tar.gz
+*.tgz
+
+# Images and screenshots
+*.bmp
+*.gif
+*.jpg
+*.jpeg
+*.png
+*.webp
+*.tif
+*.tiff
+
+# Temporary and backup files
+*.bak
+*.tmp
+*.orig
