@@ -86,8 +86,15 @@ class WriteStats:
     idx_bytes: int
 
 
-def _sort_key(value: str) -> bytes:
-    return value.encode("utf-8")
+def _ascii_fold(data: bytes) -> bytes:
+    """Fold ASCII A-Z to a-z while leaving all other bytes unchanged."""
+    return bytes(byte + 32 if 65 <= byte <= 90 else byte for byte in data)
+
+
+def stardict_sort_key(value: str) -> tuple[bytes, bytes]:
+    """Return a key equivalent to StarDict's stardict_strcmp ordering."""
+    raw = value.encode("utf-8")
+    return (_ascii_fold(raw), raw)
 
 
 def _target_paths(output_dir: Path, name: str) -> dict[str, Path]:
@@ -117,7 +124,7 @@ def write_stardict(
             f"selected output name:\n{formatted}"
         )
 
-    sorted_entries = sorted(entries, key=lambda item: _sort_key(item.headword))
+    sorted_entries = sorted(entries, key=lambda item: stardict_sort_key(item.headword))
 
     idx_records: list[bytes] = []
     headword_to_index: dict[str, int] = {}
@@ -166,7 +173,7 @@ def write_stardict(
     for headword in headword_to_index:
         alias_targets.pop(headword, None)
 
-    sorted_aliases = sorted(alias_targets.items(), key=lambda item: _sort_key(item[0]))
+    sorted_aliases = sorted(alias_targets.items(), key=lambda item: stardict_sort_key(item[0]))
 
     if sorted_aliases:
         with paths["syn"].open("wb") as syn_file:

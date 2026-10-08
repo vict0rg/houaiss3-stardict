@@ -37,3 +37,10 @@ observed data structure and validated independently.
 
 All examples used by automated tests must be synthetic and must not be derived
 from proprietary dictionary content.
+
+## StarDict Index Ordering
+
+StarDict index and synonym records must not be sorted by plain UTF-8 byte
+order. Compatible readers binary-search them using `stardict_strcmp`: an
+ASCII-only case-insensitive comparison followed by exact byte comparison as a
+tie-breaker. The writer mirrors that ordering.
