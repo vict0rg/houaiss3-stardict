@@ -56,3 +56,52 @@ comparison, while their original display headwords remain unchanged.
 
 This rule was derived from structural comparison of locally supplied source
 indexes. No proprietary lexical examples are included in this repository.
+
+## Auxiliary Lookup References
+
+The large auxiliary lookup table is not specific to verbs. It contains
+inflected forms and other searchable surface variants.
+
+The grouped reference behaves consistently as a one-based index into the
+grouped search-key table and is used as the authoritative alias target.
+
+The other numeric reference has a mixed adjacent-row convention in the
+observed source data. Some rows validate against a zero-based detailed-index
+position, some against the corresponding one-based position, and duplicate
+groups can make both interpretations valid.
+
+The converter does not guess which convention a row uses. It accepts an alias
+only when at least one of the two adjacent detailed-index interpretations
+independently resolves to the same source-defined group selected by the
+authoritative grouped reference.
+
+This rule is exhaustively validated against the locally supplied source data
+during development. No proprietary lexical examples are included here.
+
+## Optional Nominal Inference
+
+Rule-based nominal inference remains available through
+`--infer-nominal-aliases`, but it is disabled by default. The source auxiliary
+lookup table is preferred because it is source-derived rather than heuristic.
+
+## Conservative Nominal Fallback
+
+The authoritative auxiliary lookup table is used first.
+
+It does not cover every nominal inflection needed for practical lookup.
+Therefore the default conversion pipeline applies a conservative nominal
+fallback only to surface forms that are not already primary headwords or
+source-derived aliases.
+
+A fallback alias is emitted only when exactly one existing main headword is a
+valid candidate. Ambiguous mappings are skipped and counted in the local audit.
+
+This distinction is intentional:
+
+- source-derived auxiliary aliases are authoritative;
+- nominal fallback aliases are converter-generated and conservative;
+- source aliases always take precedence;
+- ambiguous generated mappings are never guessed.
+
+The fallback can be disabled with `--no-nominal-fallback` for source-only
+experiments.

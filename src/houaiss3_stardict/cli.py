@@ -70,14 +70,17 @@ def build_parser() -> argparse.ArgumentParser:
         help="Do not include the auxiliary morpheme dictionary.",
     )
     parser.add_argument(
-        "--no-verbal-aliases",
+        "--no-auxiliary-aliases",
         action="store_true",
-        help="Do not import validated verbal-form aliases.",
+        help="Do not import source auxiliary lookup aliases.",
     )
     parser.add_argument(
-        "--no-nominal-aliases",
+        "--no-nominal-fallback",
         action="store_true",
-        help="Do not generate conservative nominal inflection aliases.",
+        help=(
+            "Disable conservative nominal fallback aliases. "
+            "Source auxiliary aliases are always preferred."
+        ),
     )
 
     return parser
@@ -90,11 +93,18 @@ def _print_stats(stats: dict[str, int]) -> None:
     print(f"Morpheme search headwords: {stats['morpheme_headwords']:,}")
     print(f"Final search headwords: {stats['final_headwords']:,}")
     print(f"Explicit aliases: {stats['explicit_aliases']:,}")
-    print(f"Verbal aliases added: {stats['verbal_aliases_added']:,}")
-    print(f"Invalid verbal references: {stats['verbal_invalid_reference']:,}")
-    print(f"Verbal cross-check mismatches: {stats['verbal_crosscheck_mismatch']:,}")
-    print(f"Conservative nominal aliases added: {stats['nominal_aliases_added']:,}")
-    print(f"Ambiguous nominal mappings skipped: {stats['nominal_ambiguous']:,}")
+    print(f"Auxiliary lookup rows: {stats['auxiliary_rows']:,}")
+    print(f"Authoritative auxiliary aliases added: {stats['auxiliary_aliases_added']:,}")
+    print(f"Invalid auxiliary references: {stats['auxiliary_invalid_reference']:,}")
+    print(
+        "Auxiliary cross-check mismatches: "
+        f"{stats['auxiliary_crosscheck_mismatch']:,}"
+    )
+    print(f"p1 zero-based-only validations: {stats['auxiliary_p1_zero_only']:,}")
+    print(f"p1 one-based-only validations: {stats['auxiliary_p1_one_only']:,}")
+    print(f"p1 dual-valid validations: {stats['auxiliary_p1_both']:,}")
+    print(f"Optional nominal aliases added: {stats['nominal_aliases_added']:,}")
+    print(f"Optional ambiguous nominal mappings skipped: {stats['nominal_ambiguous']:,}")
 
 
 def main() -> None:
@@ -108,28 +118,36 @@ def main() -> None:
         parser.error("--output is required unless --dry-run is used.")
 
     source_dir = args.source.expanduser().resolve()
+
     if not source_dir.is_dir():
         parser.error(f"source directory does not exist: {source_dir}")
 
     repo_root = _project_root()
+
     if _inside(source_dir, repo_root):
         parser.error("source dictionary data must not be stored inside the repository.")
 
     output_dir: Path | None = None
+
     if args.output is not None:
         output_dir = args.output.expanduser().resolve()
+
         if _inside(output_dir, repo_root):
-            parser.error("generated dictionary data must not be written inside the repository.")
+            parser.error(
+                "generated dictionary data must not be written inside the repository."
+            )
+
         if output_dir == source_dir:
             parser.error("output directory must be different from the source directory.")
 
     print("Running full structural validation and conversion pipeline...")
+
     try:
         result = convert_source(
             source_dir,
             include_morphemes=not args.no_morphemes,
-            include_verbal_aliases=not args.no_verbal_aliases,
-            include_nominal_aliases=not args.no_nominal_aliases,
+            include_auxiliary_aliases=not args.no_auxiliary_aliases,
+            infer_nominal_aliases=not args.no_nominal_fallback,
         )
     except (FileNotFoundError, ValueError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
