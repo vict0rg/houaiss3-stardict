@@ -20,3 +20,26 @@ python3 -m unittest discover -s tests -v
 ```bash
 python3 scripts/check_repository_safety.py
 ```
+
+## Local Conversion Output
+
+Generated dictionary files must remain outside the Git repository.
+
+A typical invocation is:
+
+```bash
+houaiss3-stardict /path/to/user-owned/source \
+  --output /path/to/local/dictionary/output
+```
+
+For a small local preview:
+
+```bash
+houaiss3-stardict /path/to/user-owned/source \
+  --output /path/to/local/dictionary/output \
+  --name Preview \
+  --limit 100
+```
+
+The converter reads source data in memory and does not create decoded
+intermediate files during normal operation.
